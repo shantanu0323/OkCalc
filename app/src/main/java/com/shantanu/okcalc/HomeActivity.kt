@@ -25,36 +25,6 @@ import java.util.*
 import java.util.jar.Manifest
 
 class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListener {
-    override fun onReadyForSpeech(params: Bundle?) {
-
-    }
-
-    override fun onRmsChanged(rmsdB: Float) {
-    }
-
-    override fun onBufferReceived(buffer: ByteArray?) {
-    }
-
-    override fun onPartialResults(partialResults: Bundle?) {
-    }
-
-    override fun onEvent(eventType: Int, params: Bundle?) {
-    }
-
-    override fun onBeginningOfSpeech() {
-    }
-
-    override fun onEndOfSpeech() {
-    }
-
-    override fun onError(error: Int) {
-    }
-
-    override fun onResults(results: Bundle?) {
-        val matches:ArrayList<String>  = results!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-        tvQuery?.text = matches.get(0);
-        speechRecognizer?.stopListening()
-    }
 
     private val TAG = "MainActivity"
     private var tvResult: TextView? = null
@@ -291,16 +261,37 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         }
     }
 
-    private fun calculate(str: String): String {
-        var str = str
-        var result = 0.0f
-        Log.i(TAG, "calculate: started")
-        str = str.replace(" ", "")
+    private fun formulateExpression(stringInput: String): String {
+        var str = stringInput
+
+        str = str.replace("calculate ", "")
+        str = str.replace("what is ", "")
+        str = str.replace("how much is ", "")
+        str = str.replace(" is ", "")
         str = str.replace("into", "*")
+        str = str.replace("multiplied by", "*")
+        str = str.replace("multiply by", "*")
+        str = str.replace("divided by", "/")
+        str = str.replace("divide by", "/")
+        str = str.replace("subtracted by", "*")
+        str = str.replace("subtract by", "*")
+        str = str.replace("added to", "+")
+        str = str.replace("add to", "+")
         str = str.replace("by", "/")
         str = str.replace("plus", "+")
         str = str.replace("minus", "-")
 
+        tvQuery?.text = str
+        return str
+    }
+
+    private fun calculate(str: String): String {
+        var str = str
+        var result = 0.0f
+        Log.i(TAG, "calculate: started")
+        str = formulateExpression(str)
+
+        str = str.replace(" ", "")
         str += "#"
 
 
@@ -480,10 +471,64 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         return if (id == R.id.bSpeak) {
             tvQuery?.text = ""
             tvQuery?.text = "Listening..."
+            tvResult?.text = ""
             speechRecognizer!!.startListening(speechRecognizerIntent)
             true
         } else super.onOptionsItemSelected(item)
 
+    }
+
+    override fun onReadyForSpeech(params: Bundle?) {
+
+    }
+
+    override fun onRmsChanged(rmsdB: Float) {
+    }
+
+    override fun onBufferReceived(buffer: ByteArray?) {
+    }
+
+    override fun onPartialResults(partialResults: Bundle?) {
+    }
+
+    override fun onEvent(eventType: Int, params: Bundle?) {
+    }
+
+    override fun onBeginningOfSpeech() {
+    }
+
+    override fun onEndOfSpeech() {
+    }
+
+    override fun onError(error: Int) {
+    }
+
+    override fun onResults(results: Bundle?) {
+        val matches:ArrayList<String>  = results!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+        tvQuery?.text = matches.get(0);
+        speechRecognizer?.stopListening()
+        str = tvQuery?.getText().toString()
+        if (str!!.length == 0 || str!!.endsWith(" ")) {
+            tvResult?.setText("Complete the Expression")
+            tvResult?.setTextColor(Color.rgb(200, 0, 0))
+        } else {
+            if (str!!.endsWith(".")) {
+                str += "0"
+            }
+            tvQuery?.setText(str)
+            var result = ""
+            result = calculate(str!!)
+            try {
+                result = calculate(str!!)
+            } catch (e: Exception) {
+                result = "ERROR"
+                tvResult?.setTextColor(Color.rgb(200, 0, 0))
+                Toast.makeText(applicationContext, "ERROR : " + e.message, Toast.LENGTH_LONG).show()
+            }
+
+            tvResult?.setText(result)
+            calculated = true
+        }
     }
 
     fun checkForPermission() {
