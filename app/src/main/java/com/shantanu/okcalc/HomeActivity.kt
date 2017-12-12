@@ -1,16 +1,60 @@
 package com.shantanu.okcalc
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
+import android.net.Uri
+import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.support.v4.content.ContextCompat
+import android.support.v4.content.ContextCompat.checkSelfPermission
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import java.util.*
+import java.util.jar.Manifest
 
-class HomeActivity : AppCompatActivity(), View.OnClickListener {
+class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListener {
+    override fun onReadyForSpeech(params: Bundle?) {
+
+    }
+
+    override fun onRmsChanged(rmsdB: Float) {
+    }
+
+    override fun onBufferReceived(buffer: ByteArray?) {
+    }
+
+    override fun onPartialResults(partialResults: Bundle?) {
+    }
+
+    override fun onEvent(eventType: Int, params: Bundle?) {
+    }
+
+    override fun onBeginningOfSpeech() {
+    }
+
+    override fun onEndOfSpeech() {
+    }
+
+    override fun onError(error: Int) {
+    }
+
+    override fun onResults(results: Bundle?) {
+        val matches:ArrayList<String>  = results!!.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+        tvQuery?.text = matches.get(0);
+        speechRecognizer?.stopListening()
+    }
 
     private val TAG = "MainActivity"
     private var tvResult: TextView? = null
@@ -36,11 +80,24 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener {
     private var str: String? = null
     private var calculated: Boolean = false
 
+    private var speechRecognizer: SpeechRecognizer? = null;
+    private var speechRecognizerIntent: Intent? = null;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        checkForPermission()
         findViews()
+
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+        speechRecognizerIntent!!.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        speechRecognizerIntent!!.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+
+        speechRecognizer?.setRecognitionListener(this)
+
 
         var regularFont = Typeface.createFromAsset(getAssets(), "open_sans_regular.ttf") as Typeface
         var lightFont = Typeface.createFromAsset(getAssets(), "open_sans_light.ttf") as Typeface
@@ -239,7 +296,14 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener {
         var result = 0.0f
         Log.i(TAG, "calculate: started")
         str = str.replace(" ", "")
+        str = str.replace("into", "*")
+        str = str.replace("by", "/")
+        str = str.replace("plus", "+")
+        str = str.replace("minus", "-")
+
         str += "#"
+
+
 
         var s = ""
         var ch: Char
@@ -388,12 +452,52 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener {
         if (str.contains("#")) {
             str = str.substring(0, str.length - 1)
         }
-        result = java.lang.Float.parseFloat(str)
+        try {
+            result = java.lang.Float.parseFloat(str)
+        } catch (e: Exception) {
+            Log.e(TAG, e.message)
+        }
         if (result == result.toInt().toFloat()) {
             str = "" + result.toInt()
         }
         Log.i(TAG, "\n\ncalculate: str = '$str'")
         return str
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        menuInflater.inflate(R.menu.home_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        val id = item.getItemId()
+
+
+        return if (id == R.id.bSpeak) {
+            tvQuery?.text = ""
+            tvQuery?.text = "Listening..."
+            speechRecognizer!!.startListening(speechRecognizerIntent)
+            true
+        } else super.onOptionsItemSelected(item)
+
+    }
+
+    fun checkForPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                var intent:Intent? = null;
+                intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        Uri.parse("package:" + packageName))
+                startActivity(intent)
+                finish()
+            }
+        }
     }
 
 }
