@@ -263,6 +263,22 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
 
     private fun formulateExpression(stringInput: String): String {
         var str = stringInput
+        Log.i(TAG,"RETRIEVED VOICE : " + str)
+
+        str = str.toLowerCase()
+        str = str.replace("zero", "0")
+        str = str.replace("one", "1")
+        str = str.replace("two", "2")
+        str = str.replace("three", "3")
+        str = str.replace("four", "4")
+        str = str.replace("five", "5")
+        str = str.replace("six", "6")
+        str = str.replace("seven", "7")
+        str = str.replace("eight", "8")
+        str = str.replace("nine", "9")
+        str = str.replace("ten", "10")
+        str = str.replace("point ", "0.")
+
 
         str = str.replace("calculate ", "")
         str = str.replace("what is ", "")
@@ -280,12 +296,23 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         str = str.replace("by", "/")
         str = str.replace("plus", "+")
         str = str.replace("minus", "-")
+        str = str.replace(" millions", "000000")
+        str = str.replace(" million", "000000")
+        str = str.replace(" billions", "000000000")
+        str = str.replace(" billion", "000000000")
+        str = str.replace(" trillions", "000000000000")
+        str = str.replace(" trillion", "000000000000")
+        str = str.replace(" lacs", "00000")
+        str = str.replace(" lac", "00000")
+        str = str.replace(" lakh", "00000")
+        str = str.replace(" crore", "0000000")
 
         tvQuery?.text = str
         return str
     }
 
     private fun calculate(str: String): String {
+        var valid = false
         var str = str
         var result = 0.0f
         Log.i(TAG, "calculate: started")
@@ -293,8 +320,6 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
 
         str = str.replace(" ", "")
         str += "#"
-
-
 
         var s = ""
         var ch: Char
@@ -305,6 +330,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         var operator = false
 
         if (str.contains("/")) {
+            valid = true
             i = 0
             while (i < str!!.length) {
                 Log.i(TAG, "calculate: i = " + i)
@@ -356,6 +382,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         Log.i(TAG, "\n\ncalculate: str = '$str'")
 
         if (str.contains("*")) {
+            valid = true
             i = 0
             while (i < str.length) {
                 Log.i(TAG, "calculate: i = " + i)
@@ -406,6 +433,7 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         Log.i(TAG, "\n\ncalculate: str = '$str'")
 
         if (str.contains("+") || str.contains("-")) {
+            valid = true
             var pos = 0.0f
             var neg = 0.0f
             var negative = false
@@ -443,15 +471,20 @@ class HomeActivity : AppCompatActivity(), View.OnClickListener, RecognitionListe
         if (str.contains("#")) {
             str = str.substring(0, str.length - 1)
         }
+
         try {
             result = java.lang.Float.parseFloat(str)
         } catch (e: Exception) {
             Log.e(TAG, e.message)
         }
+
         if (result == result.toInt().toFloat()) {
             str = "" + result.toInt()
         }
+
         Log.i(TAG, "\n\ncalculate: str = '$str'")
+        if (!valid)
+            str = "Please speak a valid expression"
         return str
     }
 
